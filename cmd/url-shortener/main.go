@@ -4,8 +4,11 @@ import (
 	"os"
 
 	"github.com/arynskiii/url-shortener/internal/config"
+	"github.com/arynskiii/url-shortener/internal/http-server/middleware/logger"
 	"github.com/arynskiii/url-shortener/internal/lib/logger/sl"
 	"github.com/arynskiii/url-shortener/internal/storage/sqlite"
+	"github.com/go-chi/chi/middleware"
+	"github.com/go-chi/chi/v5"
 	"golang.org/x/exp/slog"
 )
 
@@ -26,6 +29,12 @@ func main() {
 		os.Exit(1)
 	}
 	_ = storage
+	router := chi.NewRouter()
+	router.Use(middleware.RequestID)
+	router.Use(middleware.Logger)
+	router.Use(logger.New(log))
+	router.Use(middleware.Recoverer)
+	router.Use(middleware.URLFormat)
 }
 
 func setupLogger(env string) *slog.Logger {
