@@ -26,6 +26,7 @@ func NewStore(storagePath string) (*Storage, error) {
 		url TEXT NOT NULL);
 		CREATE INDEX IF NOT EXISTS idx_alias on url(alias);
 	`)
+
 	if err != nil {
 		return nil, fmt.Errorf("%s:%w", op, err)
 	}
@@ -78,7 +79,7 @@ func (s *Storage) DeleteURL(alias string) error {
 	if err != nil {
 		return fmt.Errorf("failed to find url with this alias")
 	}
-	_, err = stmt.Exec()
+	_, err = stmt.Exec(alias)
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}

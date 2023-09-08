@@ -5,6 +5,8 @@ import (
 	"os"
 
 	"github.com/arynskiii/url-shortener/internal/config"
+	"github.com/arynskiii/url-shortener/internal/http-server/handlers/delete"
+	"github.com/arynskiii/url-shortener/internal/http-server/handlers/redirect"
 	"github.com/arynskiii/url-shortener/internal/http-server/handlers/url/save"
 	"github.com/arynskiii/url-shortener/internal/http-server/middleware/logger"
 	"github.com/arynskiii/url-shortener/internal/lib/logger/sl"
@@ -30,7 +32,7 @@ func main() {
 		log.Error("failed to init storage", sl.Err(err))
 		os.Exit(1)
 	}
-	_ = storage
+
 	router := chi.NewRouter()
 	router.Use(middleware.RequestID)
 	router.Use(middleware.Logger)
@@ -38,8 +40,11 @@ func main() {
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.URLFormat)
 
-	router.Post("/url", save.New(log, storage))
+	router.Delete("/delete", delete.New(log, storage))
+	router.Post("/save", save.New(log, storage))
+
 	log.Info("starting server", slog.String("address", cfg.Address))
+	router.Get("/{alias}", redirect.New(log, storage))
 
 	srv := &http.Server{
 		Addr:         cfg.Address,
@@ -51,6 +56,7 @@ func main() {
 	if err := srv.ListenAndServe(); err != nil {
 		log.Error("failed to start server", err)
 	}
+	log.Info("server stopped")
 }
 
 func setupLogger(env string) *slog.Logger {
